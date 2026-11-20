@@ -1,5 +1,12 @@
 import os
 import sys
+
+# Ensure stdout and stderr are not None when running without console
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
+
 import time
 import socket
 import threading

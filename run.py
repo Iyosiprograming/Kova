@@ -1,5 +1,12 @@
+import os
 import sys
 from pathlib import Path
+
+# When running under PyInstaller with --noconsole, redirect stdout/stderr to avoid NoneType errors
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
 
 # Ensure root and backend modules are resolvable
 ROOT_DIR = Path(__file__).resolve().parent
