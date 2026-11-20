@@ -114,11 +114,11 @@ export const Home: React.FC = () => {
                   isCurrent ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
                 }`}
               >
-                {/* Full-Light Backdrop */}
+                {/* Full-Light Backdrop Image (Absolute to sit behind text) */}
                 <img
                   src={cand.background || cand.poster}
                   alt={cand.name}
-                  className="w-full h-full object-cover object-top opacity-100"
+                  className="absolute inset-0 w-full h-full object-cover object-top opacity-100"
                 />
 
                 {/* Left Text Scrim Only - leaves 70% of image bright and shining */}
