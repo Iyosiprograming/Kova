@@ -2,7 +2,7 @@
 
 > A modern, local-first desktop streaming app for **Movies**, **TV Shows**, and **Live Sports**.
 
-Kova gives you a clean, Netflix/Cinejoy-inspired interface to browse trending content, track what you're watching, and stream live sports — packaged as a single Windows application or run locally in development.
+Kova gives you a clean, Netflix-inspired interface to browse trending content, track what you're watching, and stream live sports — packaged as a single Windows application or run locally in development.
 
 ---
 
@@ -16,16 +16,15 @@ Kova gives you a clean, Netflix/Cinejoy-inspired interface to browse trending co
 
 ---
 
-## 🚀 Quick Start (Normal Users)
+## 📥 Download & Run (Windows)
 
-No coding or setup required.
+No installation, Python, or coding required:
 
-1. Open the `dist/` folder:
-   ```
-   dist/Kova.exe
-   ```
-2. Double-click **`Kova.exe`**.
-3. It launches in the background and opens Kova in your web browser at `http://127.0.0.1:8000`.
+1. Go to the **[Releases](../../releases/latest)** page.
+2. Download **`Kova.exe`** under the **Assets** section.
+3. Double-click **`Kova.exe`**. It starts quietly in the background and opens Kova directly in your browser!
+
+> 💡 **Note on Windows SmartScreen**: On the very first launch, Windows may show *"Windows protected your PC"* because the app is new and unsigned. Simply click **"More info"** ➔ **"Run anyway"**.
 
 ---
 
