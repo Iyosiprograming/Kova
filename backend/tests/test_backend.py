@@ -20,8 +20,8 @@ async def test_root_status():
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get("/")
         assert response.status_code == 200
-        data = response.json()
-        assert "Kova" in data.get("name", "")
+        # When dist/ is built it serves index.html; otherwise JSON placeholder
+        assert "Kova" in response.text or "kova" in response.text.lower()
 
 
 @pytest.mark.anyio
