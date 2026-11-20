@@ -1,4 +1,5 @@
 import sys
+import time
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
@@ -85,6 +86,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------
+# Heartbeat / Auto-shutdown tracking
+# ---------------------------------------------------------
+LAST_HEARTBEAT: float = time.time()
+HEARTBEAT_RECEIVED: bool = False
+
+@app.post("/api/heartbeat")
+def receive_heartbeat():
+    global LAST_HEARTBEAT, HEARTBEAT_RECEIVED
+    LAST_HEARTBEAT = time.time()
+    HEARTBEAT_RECEIVED = True
+    return {"status": "ok"}
 
 
 # ---------------------------------------------------------
