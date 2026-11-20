@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Calendar } from 'lucide-react';
+import { Play, Calendar, Flame } from 'lucide-react';
 import { SportsMatch } from '../lib/api';
 import { SportCategory } from './SportsDock';
 
@@ -44,12 +44,10 @@ export const SportsHero: React.FC<SportsHeroProps> = ({ matches, selectedSport }
     }
   }, [matches, selectedSport]);
 
-  // Reset index when category changes
   useEffect(() => {
     setCurrentIndex(0);
   }, [selectedSport]);
 
-  // Auto-rotate every 7 seconds in 'all' mode
   useEffect(() => {
     if (candidateMatches.length <= 1) return;
     const interval = setInterval(() => {
@@ -64,33 +62,41 @@ export const SportsHero: React.FC<SportsHeroProps> = ({ matches, selectedSport }
   const isLive = activeMatch.status === 'live';
 
   return (
-    <div className="relative w-full h-[360px] sm:h-[420px] md:h-[460px] overflow-hidden rounded-3xl mx-auto my-6 border border-white/15 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 shadow-2xl select-none">
-      {/* Stadium / Arena Atmosphere Background with vibrant lighting */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-950/40 via-zinc-950/80 to-[#090A0B]" />
+    <div className="relative w-full h-[360px] sm:h-[420px] md:h-[460px] overflow-hidden rounded-3xl mx-auto my-6 border border-white/15 bg-gradient-to-br from-[#12161f] via-[#0d1017] to-[#090a0d] shadow-2xl select-none">
+      {/* Dynamic Ambient Stadium Lights */}
+      <div className="absolute -top-32 -left-20 w-[450px] h-[450px] bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute -bottom-32 -right-20 w-[450px] h-[450px] bg-cyan-500/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#C5F36A]/10 rounded-full blur-[90px] pointer-events-none" />
 
-      {/* Decorative ambient lighting elements */}
-      <div className="absolute -top-24 left-1/4 w-96 h-96 bg-[#C5F36A]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Modern Pitch & Court Grid Texture Overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      />
 
       {/* Main Content Layout */}
       <div className="relative z-10 h-full flex flex-col justify-between p-6 sm:p-10">
-        {/* Top Bar: League & Live Badge */}
+        {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {isLive ? (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/25 border border-red-500/40 text-red-400 font-mono text-xs font-bold uppercase tracking-wider shadow-lg shadow-red-500/20">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-400 font-mono text-xs font-bold uppercase tracking-wider shadow-lg shadow-red-500/20">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                 <span>LIVE NOW</span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-zinc-300 font-mono text-xs">
                 <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Scheduled Match</span>
+                <span>Upcoming Match</span>
               </div>
             )}
 
-            <div className="px-3 py-1 rounded-full bg-black/60 border border-white/15 text-xs font-mono font-semibold text-[#C5F36A] uppercase tracking-wider backdrop-blur-md">
-              {activeMatch.league || activeMatch.category || 'Featured'}
+            <div className="px-3.5 py-1 rounded-full bg-black/60 border border-white/15 text-xs font-mono font-bold text-[#C5F36A] uppercase tracking-wider backdrop-blur-md flex items-center gap-1.5">
+              <Flame className="w-3.5 h-3.5" />
+              <span>{activeMatch.league || activeMatch.category || 'Featured'}</span>
             </div>
           </div>
 
@@ -111,72 +117,72 @@ export const SportsHero: React.FC<SportsHeroProps> = ({ matches, selectedSport }
           )}
         </div>
 
-        {/* Center: Prominent Club / Teams Logos Showcase */}
-        <div className="flex items-center justify-center gap-6 sm:gap-12 md:gap-16 my-auto">
+        {/* Center: High-Resolution Teams / Logos Face-Off */}
+        <div className="flex items-center justify-center gap-6 sm:gap-14 md:gap-20 my-auto">
           {/* Home Team */}
-          <div className="flex flex-col items-center text-center max-w-[140px] sm:max-w-[200px]">
-            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-zinc-900/90 border border-white/20 p-3 sm:p-4 flex items-center justify-center shadow-2xl backdrop-blur-xl group-hover:scale-105 transition-transform">
+          <div className="flex flex-col items-center text-center max-w-[130px] sm:max-w-[180px] md:max-w-[220px]">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-white/[0.04] border border-white/20 p-3 sm:p-4 flex items-center justify-center shadow-2xl backdrop-blur-xl group-hover:scale-105 transition-transform">
               {activeMatch.home_logo ? (
                 <img
                   src={activeMatch.home_logo}
                   alt={activeMatch.home || 'Home'}
-                  className="w-full h-full object-contain filter drop-shadow-lg"
+                  className="w-full h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]"
                   onError={(e) => {
                     (e.currentTarget as HTMLElement).style.display = 'none';
                   }}
                 />
               ) : (
-                <span className="font-mono font-extrabold text-2xl text-[#C5F36A]">
+                <span className="font-mono font-extrabold text-2xl sm:text-3xl text-[#C5F36A]">
                   {getInitials(activeMatch.home || activeMatch.title)}
                 </span>
               )}
             </div>
-            <h3 className="font-display text-lg sm:text-2xl font-bold uppercase text-white mt-3 truncate w-full drop-shadow">
+            <h3 className="font-display text-base sm:text-xl md:text-2xl font-bold uppercase text-white mt-3 truncate w-full drop-shadow">
               {activeMatch.home || activeMatch.title}
             </h3>
           </div>
 
-          {/* VS Badge */}
+          {/* VS Pill & Stream Status */}
           <div className="flex flex-col items-center">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#C5F36A] text-black font-mono font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-xl shadow-[#C5F36A]/30">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#C5F36A] text-black font-mono font-black text-xs sm:text-sm flex items-center justify-center shadow-xl shadow-[#C5F36A]/30">
               VS
             </div>
             {activeMatch.online_streams && activeMatch.online_streams > 0 ? (
-              <span className="text-[10px] font-mono text-emerald-400 mt-2 font-semibold">
-                ● {activeMatch.online_streams} Streams Live
+              <span className="text-[11px] font-mono text-emerald-400 mt-2 font-bold whitespace-nowrap">
+                ● {activeMatch.online_streams} Streams
               </span>
             ) : null}
           </div>
 
           {/* Away Team */}
-          <div className="flex flex-col items-center text-center max-w-[140px] sm:max-w-[200px]">
-            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-zinc-900/90 border border-white/20 p-3 sm:p-4 flex items-center justify-center shadow-2xl backdrop-blur-xl group-hover:scale-105 transition-transform">
+          <div className="flex flex-col items-center text-center max-w-[130px] sm:max-w-[180px] md:max-w-[220px]">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-white/[0.04] border border-white/20 p-3 sm:p-4 flex items-center justify-center shadow-2xl backdrop-blur-xl group-hover:scale-105 transition-transform">
               {activeMatch.away_logo ? (
                 <img
                   src={activeMatch.away_logo}
                   alt={activeMatch.away || 'Away'}
-                  className="w-full h-full object-contain filter drop-shadow-lg"
+                  className="w-full h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]"
                   onError={(e) => {
                     (e.currentTarget as HTMLElement).style.display = 'none';
                   }}
                 />
               ) : (
-                <span className="font-mono font-extrabold text-2xl text-zinc-300">
+                <span className="font-mono font-extrabold text-2xl sm:text-3xl text-zinc-300">
                   {getInitials(activeMatch.away)}
                 </span>
               )}
             </div>
-            <h3 className="font-display text-lg sm:text-2xl font-bold uppercase text-white mt-3 truncate w-full drop-shadow">
-              {activeMatch.away || 'Away Team'}
+            <h3 className="font-display text-base sm:text-xl md:text-2xl font-bold uppercase text-white mt-3 truncate w-full drop-shadow">
+              {activeMatch.away || 'Opponent'}
             </h3>
           </div>
         </div>
 
-        {/* Bottom CTA Row */}
+        {/* Bottom CTA Button */}
         <div className="flex items-center justify-center">
           <a
             href={`#/sports/watch/${activeMatch.id}`}
-            className="flex items-center gap-2.5 px-8 py-3 rounded-full bg-[#C5F36A] text-black font-bold text-sm sm:text-base hover:bg-[#b5e357] transition-all transform hover:scale-105 shadow-xl shadow-[#C5F36A]/30"
+            className="flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#C5F36A] text-black font-bold text-sm sm:text-base hover:bg-[#b5e357] transition-all transform hover:scale-105 shadow-xl shadow-[#C5F36A]/30"
           >
             <Play className="w-5 h-5 fill-current ml-0.5" />
             <span>Watch Live Stream</span>

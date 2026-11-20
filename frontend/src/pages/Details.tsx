@@ -108,17 +108,17 @@ export const Details: React.FC<DetailsProps> = ({ mediaType, imdbId }) => {
   return (
     <div className="w-full pb-20">
       {/* Hero Backdrop Section */}
-      <div className="relative w-full min-h-[460px] md:min-h-[520px] overflow-hidden -mt-3">
-        {/* Backdrop Image */}
+      <div className="relative w-full min-h-[460px] md:min-h-[520px] overflow-hidden -mt-3 bg-[#090A0B]">
+        {/* Full-Light Backdrop Image */}
         <img
           src={meta.background || meta.poster}
           alt={meta.name}
-          className="absolute inset-0 w-full h-full object-cover object-top opacity-30"
+          className="absolute inset-0 w-full h-full object-cover object-top opacity-85"
         />
 
-        {/* Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#090A0B] via-[#090A0B]/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#090A0B] via-[#090A0B]/90 to-transparent" />
+        {/* Left Text Scrim & Bottom Transition */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#090A0B]/95 via-[#090A0B]/40 to-transparent w-full md:w-3/4" />
+        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[#090A0B] to-transparent pointer-events-none" />
 
         {/* Content Container */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-10 pb-12 flex flex-col md:flex-row gap-8 items-start md:items-end">
