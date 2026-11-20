@@ -1,5 +1,6 @@
 import sys
 import time
+import asyncio
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
@@ -31,9 +32,11 @@ from backend.services.cinemeta import (
     fetch_meta,
     search_media,
 )
-from backend.services.embedse import (
-    fetch_matches,
-    fetch_match_streams,
+from backend.services.daddylive import (
+    fetch_daddylive_events,
+    fetch_daddylive_streams,
+    fetch_daddylive_channels,
+    get_channel_by_id,
 )
 
 
@@ -182,12 +185,12 @@ async def search(q: str = Query(..., min_length=1)):
 
 
 # ---------------------------------------------------------
-# Sports Routes (EmbedSE)
+# Sports & Channels Routes (DaddyLive)
 # ---------------------------------------------------------
 @app.get("/api/sports/matches")
 async def get_sports_matches():
     """
-    Fetch live and upcoming sports matches ranked by status, streams, and league.
+    Fetch live sports matches directly from DaddyLive.
     Cached in RAM for 60 seconds.
     """
     cache_key = "sports:matches"
@@ -195,7 +198,7 @@ async def get_sports_matches():
     if cached is not None:
         return {"source": "cache", "count": len(cached), "matches": cached}
 
-    matches = await fetch_matches()
+    matches = await fetch_daddylive_events()
     memory_cache.set(cache_key, matches, ttl=TTL_SPORTS)
     return {"source": "live", "count": len(matches), "matches": matches}
 
@@ -203,10 +206,37 @@ async def get_sports_matches():
 @app.get("/api/sports/matches/{match_id}/streams")
 async def get_sports_streams(match_id: str):
     """
-    Fetch fresh stream servers for a match (no cache).
+    Fetch fresh stream servers for a DaddyLive sports match.
     """
-    data = await fetch_match_streams(match_id)
+    data = await fetch_daddylive_streams(match_id)
     return data
+
+
+@app.get("/api/channels")
+async def get_channels():
+    """
+    Fetch 24/7 Live TV channels list from DaddyLive.
+    Cached in RAM for 30 minutes.
+    """
+    cache_key = "daddylive:channels"
+    cached = memory_cache.get(cache_key)
+    if cached is not None:
+        return {"source": "cache", "count": len(cached), "channels": cached}
+
+    channels = await fetch_daddylive_channels()
+    memory_cache.set(cache_key, channels, ttl=1800)
+    return {"source": "live", "count": len(channels), "channels": channels}
+
+
+@app.get("/api/channels/{channel_id}")
+async def get_single_channel(channel_id: str):
+    """
+    Retrieve single channel details and streams.
+    """
+    ch = await get_channel_by_id(channel_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Channel not found")
+    return ch
 
 
 # ---------------------------------------------------------

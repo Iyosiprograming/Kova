@@ -61,6 +61,7 @@ export interface SportsMatch {
   category_slug?: string;
   home?: string;
   away?: string;
+  is_single_event?: boolean;
   home_logo?: string | null;
   away_logo?: string | null;
   start?: number | string;
@@ -69,6 +70,17 @@ export interface SportsMatch {
   online_streams?: number;
   streams_count?: number;
   embed_url?: string;
+  provider?: 'daddylive' | 'embedse' | string;
+}
+
+export interface LiveChannel {
+  id: string;
+  name: string;
+  category: string;
+  streams: string[];
+  embed_url: string;
+  streams_count: number;
+  logo?: string | null;
 }
 
 export interface StreamSource {
@@ -137,11 +149,24 @@ export async function fetchMatchStreams(matchId: string): Promise<MatchStreamsRe
   if (!res.ok) {
     return {
       match_id: matchId,
-      auto_embed_url: `https://embedse.com/m/${matchId}`,
+      auto_embed_url: '',
       streams: [],
       count: 0,
     };
   }
+  return await res.json();
+}
+
+export async function fetchChannels(): Promise<LiveChannel[]> {
+  const res = await fetch(`${API_BASE}/channels`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.channels || [];
+}
+
+export async function fetchChannel(id: string): Promise<LiveChannel | null> {
+  const res = await fetch(`${API_BASE}/channels/${id}`);
+  if (!res.ok) return null;
   return await res.json();
 }
 

@@ -58,18 +58,17 @@ def open_browser_delayed(url: str, delay: float = 1.2):
     thread.start()
 
 
-def start_watchdog(server: uvicorn.Server, startup_grace: float = 35.0, timeout: float = 10.0):
+def start_watchdog(server: uvicorn.Server, startup_grace: float = 120.0, timeout: float = 45.0):
     """
-    Watchdog thread that checks if any browser tab is open.
-    If no tab has sent a heartbeat within `timeout` seconds, or if the browser
-    fails to open within `startup_grace` seconds, cleanly terminates the background process.
+    Watchdog thread: closes background process only when packaged as an executable
+    and the user has closed all browser tabs (inactivity > timeout).
     """
     import backend.main as main_module
 
     def _watch():
         start_time = time.time()
         while not server.should_exit:
-            time.sleep(2.0)
+            time.sleep(3.0)
             now = time.time()
             if main_module.HEARTBEAT_RECEIVED:
                 if (now - main_module.LAST_HEARTBEAT) > timeout:
@@ -113,9 +112,10 @@ def main():
     )
     server = uvicorn.Server(config)
 
-    # Start auto-shutdown watchdog unless explicitly disabled in dev
-    if os.environ.get("KOVA_NO_SHUTDOWN") != "1":
-        start_watchdog(server, startup_grace=40.0, timeout=10.0)
+    # Auto-shutdown watchdog only runs in frozen executable mode (or if explicitly enabled)
+    is_frozen = getattr(sys, "frozen", False)
+    if is_frozen or os.environ.get("KOVA_WATCHDOG") == "1":
+        start_watchdog(server, startup_grace=120.0, timeout=45.0)
 
     # Start server
     server.run()

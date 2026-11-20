@@ -1,37 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Play } from 'lucide-react';
+import { Play, Clock } from 'lucide-react';
 import { SportsDock, SportCategory } from '../components/SportsDock';
-import { SportsHero } from '../components/SportsHero';
+import { TeamBadge } from '../components/TeamBadge';
 import { fetchSportsMatches, SportsMatch } from '../lib/api';
+import { matchBelongsToCategory, formatCountdown } from '../lib/sportsUtils';
 
-function formatCountdown(startTime: number | string | undefined): string {
-  if (!startTime) return 'Upcoming';
-  const startMs = typeof startTime === 'string' ? new Date(startTime).getTime() : startTime * 1000;
-  const diff = startMs - Date.now();
+const SAVED_SPORT_KEY = 'kova_selected_sport';
 
-  if (diff <= 0) return 'Starting soon';
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-  if (hours > 24) {
-    const days = Math.floor(hours / 24);
-    return `Starts in ${days}d ${hours % 24}h`;
-  }
-  if (hours > 0) return `Starts in ${hours}h ${minutes}m`;
-  return `Starts in ${minutes}m`;
-}
-
-function getInitials(name?: string): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+const getInitialSport = (): SportCategory => {
+  try {
+    const saved = sessionStorage.getItem(SAVED_SPORT_KEY) as SportCategory;
+    if (saved) return saved;
+  } catch {}
+  return 'all';
+};
 
 export const Sports: React.FC = () => {
-  const [selectedSport, setSelectedSport] = useState<SportCategory>('all');
+  const [selectedSport, setSelectedSportState] = useState<SportCategory>(getInitialSport);
   const [matches, setMatches] = useState<SportsMatch[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const handleSelectSport = (sport: SportCategory) => {
+    setSelectedSportState(sport);
+    try {
+      sessionStorage.setItem(SAVED_SPORT_KEY, sport);
+    } catch {}
+  };
 
   const loadMatches = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -59,41 +53,31 @@ export const Sports: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Filter matches based on selected category
+  // Filter matches based on selected category (supports all 10 DaddyLive sports)
   const filteredMatches = React.useMemo(() => {
-    if (selectedSport === 'all') return matches;
-    return matches.filter((m) => {
-      const s = (m.sport || m.category || m.category_slug || '').toLowerCase();
-      if (selectedSport === 'soccer') return s.includes('foot') || s.includes('socc');
-      if (selectedSport === 'combat') return s.includes('ufc') || s.includes('mma') || s.includes('box');
-      if (selectedSport === 'basketball') return s.includes('basket') || s.includes('nba');
-      if (selectedSport === 'tennis') return s.includes('tennis');
-      if (selectedSport === 'golf') return s.includes('golf') || s.includes('pga');
-      return true;
-    });
+    return matches.filter((m) => matchBelongsToCategory(m, selectedSport));
   }, [matches, selectedSport]);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 sm:px-10 py-6">
-      {/* Icon-Only Tactical Sports Dock */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-10 py-6">
+      {/* 10-Sport Dedicated Category Dock */}
       <SportsDock
         selectedSport={selectedSport}
-        onSelectSport={setSelectedSport}
+        onSelectSport={handleSelectSport}
       />
 
-      {/* Auto-Rotating Hero Banner */}
-      {matches.length > 0 && (
-        <SportsHero matches={matches} selectedSport={selectedSport} />
-      )}
-
       {/* Match Cards Header */}
-      <div className="flex items-center justify-between mt-10 mb-6">
-        <h2 className="font-display text-2xl sm:text-3xl font-bold uppercase tracking-wide text-white">
-          {selectedSport === 'all' ? 'All Live & Scheduled Matches' : `${selectedSport} Matches`}
-        </h2>
-        <span className="font-mono text-xs text-zinc-400">
-          <span className="text-[#C5F36A] font-semibold">{filteredMatches.length}</span> events
-        </span>
+      <div className="flex items-center justify-between gap-4 mt-6 mb-6">
+        <div>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold uppercase tracking-wide text-white">
+            {selectedSport === 'all'
+              ? 'All Live Sports'
+              : `${selectedSport.toUpperCase()} Matches`}
+          </h2>
+          <span className="font-mono text-xs text-zinc-400">
+            <span className="text-[#C5F36A] font-semibold">{filteredMatches.length}</span> live events on DaddyLive
+          </span>
+        </div>
       </div>
 
       {/* Match Cards Grid */}
@@ -107,8 +91,10 @@ export const Sports: React.FC = () => {
           ))
         ) : filteredMatches.length > 0 ? (
           filteredMatches.map((match) => {
-            const isLive = match.status === 'live';
+            const countdown = formatCountdown(match.start);
+            const isMatchLive = match.status === 'live' || countdown.toLowerCase().includes('live');
             const isFinished = match.status === 'finished';
+            const hasAwayTeam = Boolean(match.away && match.away.trim().length > 0);
 
             return (
               <a
@@ -118,86 +104,91 @@ export const Sports: React.FC = () => {
               >
                 {/* Header: League & Status Badge */}
                 <div className="flex items-center justify-between gap-2 mb-4">
-                  <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider truncate max-w-[180px]">
-                    {match.league || match.category || match.sport}
-                  </span>
+                  <div className="flex items-center gap-2 truncate max-w-[200px]">
+                    <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider truncate">
+                      {match.league || match.category || match.sport}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                      DaddyLive
+                    </span>
+                  </div>
 
-                  {isLive ? (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 font-mono text-[11px] font-bold">
+                  {isMatchLive ? (
+                    <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-400 font-mono text-[11px] font-bold shadow-sm shadow-red-500/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                      <span>LIVE NOW</span>
+                      <span>{countdown.includes('Progress') ? 'IN PROGRESS' : 'LIVE NOW'}</span>
                     </div>
                   ) : isFinished ? (
                     <span className="px-2 py-0.5 rounded-full bg-white/5 text-zinc-500 font-mono text-[11px] uppercase">
                       Finished
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 font-mono text-[11px]">
-                      <Calendar className="w-3 h-3 text-zinc-400" />
-                      <span>{formatCountdown(match.start)}</span>
+                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 font-mono text-[11px] font-semibold">
+                      <Clock className="w-3 h-3 text-amber-400" />
+                      <span>{countdown}</span>
                     </span>
                   )}
                 </div>
 
-                {/* Body: Teams / Logos */}
-                <div className="flex items-center justify-between gap-4 my-2">
-                  {/* Home Team */}
-                  <div className="flex flex-col items-center flex-1 text-center min-w-0">
-                    <div className="w-12 h-12 rounded-full glass-panel flex items-center justify-center p-1 mb-2 overflow-hidden border border-white/10 bg-zinc-900">
-                      {match.home_logo ? (
-                        <img
-                          src={match.home_logo}
-                          alt={match.home || 'Home'}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <span className="font-mono font-bold text-xs text-[#C5F36A]">
-                          {getInitials(match.home || match.title)}
-                        </span>
-                      )}
+                {/* Body: Teams / Logos OR Single Featured Event */}
+                {hasAwayTeam ? (
+                  <div className="flex items-center justify-between gap-4 my-2">
+                    {/* Home Team */}
+                    <div className="flex flex-col items-center flex-1 text-center min-w-0">
+                      <TeamBadge
+                        logo={match.home_logo}
+                        name={match.home || match.title}
+                        sport={match.sport}
+                        size="md"
+                        className="mb-2"
+                      />
+                      <span className="font-medium text-sm text-zinc-100 truncate w-full group-hover:text-[#C5F36A] transition-colors">
+                        {match.home || match.title}
+                      </span>
                     </div>
-                    <span className="font-medium text-sm text-zinc-100 truncate w-full group-hover:text-[#C5F36A] transition-colors">
-                      {match.home || match.title}
+
+                    {/* VS badge */}
+                    <div className="font-mono text-xs font-bold text-zinc-400 uppercase tracking-widest px-2">
+                      VS
+                    </div>
+
+                    {/* Away Team */}
+                    <div className="flex flex-col items-center flex-1 text-center min-w-0">
+                      <TeamBadge
+                        logo={match.away_logo}
+                        name={match.away || ''}
+                        sport={match.sport}
+                        size="md"
+                        className="mb-2"
+                      />
+                      <span className="font-medium text-sm text-zinc-100 truncate w-full group-hover:text-[#C5F36A] transition-colors">
+                        {match.away}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center my-3 py-1">
+                    <TeamBadge
+                      logo={match.home_logo}
+                      name={match.home || match.title}
+                      sport={match.sport}
+                      size="md"
+                      className="mb-2"
+                    />
+                    <span className="font-semibold text-sm text-zinc-100 line-clamp-2 max-w-full group-hover:text-[#C5F36A] transition-colors">
+                      {match.title || match.home}
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-500 mt-1">
+                      {match.sport} • {match.category || 'Special Event'}
                     </span>
                   </div>
-
-                  {/* VS / Score pill */}
-                  <div className="font-mono text-xs font-bold text-zinc-400 uppercase tracking-widest px-2">
-                    VS
-                  </div>
-
-                  {/* Away Team */}
-                  <div className="flex flex-col items-center flex-1 text-center min-w-0">
-                    <div className="w-12 h-12 rounded-full glass-panel flex items-center justify-center p-1 mb-2 overflow-hidden border border-white/10 bg-zinc-900">
-                      {match.away_logo ? (
-                        <img
-                          src={match.away_logo}
-                          alt={match.away || 'Away'}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <span className="font-mono font-bold text-xs text-zinc-400">
-                          {getInitials(match.away)}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-medium text-sm text-zinc-100 truncate w-full group-hover:text-[#C5F36A] transition-colors">
-                      {match.away || 'Opponent'}
-                    </span>
-                  </div>
-                </div>
+                )}
 
                 {/* Footer Action */}
                 <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono">
                   <span className="text-zinc-500">
                     {match.online_streams && match.online_streams > 0
-                      ? `${match.online_streams} active streams`
+                      ? `${match.online_streams} active stream${match.online_streams > 1 ? 's' : ''}`
                       : 'Stream available on start'}
                   </span>
                   <span className="flex items-center gap-1 text-[#C5F36A] font-semibold group-hover:translate-x-0.5 transition-transform">
@@ -210,7 +201,7 @@ export const Sports: React.FC = () => {
           })
         ) : (
           <div className="col-span-full py-16 text-center text-zinc-500 font-mono text-sm">
-            No matches found for this sport right now.
+            No matches found for this category right now.
           </div>
         )}
       </div>
