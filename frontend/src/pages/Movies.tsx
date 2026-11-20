@@ -19,7 +19,7 @@ export const Movies: React.FC = () => {
     });
   }, []);
 
-  // Auto-rotate trending banner every 6 seconds
+  // Auto-rotate trending banner smoothly every 6 seconds
   useEffect(() => {
     if (trendingHero.length <= 1) return;
     const interval = setInterval(() => {
@@ -49,85 +49,95 @@ export const Movies: React.FC = () => {
     };
   }, [genre, sort]);
 
-  const activeHero = trendingHero[heroIndex];
-
   return (
-    <div className="max-w-7xl mx-auto px-6 sm:px-10 py-6">
-      {/* Light & Vibrant Changing Banner of Trending Movies */}
-      {activeHero && (
-        <div className="relative w-full h-[340px] sm:h-[420px] md:h-[480px] rounded-3xl overflow-hidden mb-8 border border-white/10 bg-[#090A0B] select-none shadow-2xl">
-          {/* Full-Brightness Backdrop Image */}
-          <img
-            key={activeHero.id || heroIndex}
-            src={activeHero.background || activeHero.poster}
-            alt={activeHero.name}
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-100 animate-in fade-in duration-500"
-          />
-
-          {/* Left Text Scrim Only */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#090A0B]/90 via-[#090A0B]/25 to-transparent w-full md:w-3/4" />
-
-          {/* Subtle Bottom Edge Transition */}
-          <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#090A0B] to-transparent pointer-events-none" />
-
-          {/* Banner Content */}
-          <div className="relative z-10 h-full flex flex-col justify-end p-6 sm:p-10 max-w-2xl">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 rounded-full bg-[#C5F36A] text-black font-mono font-bold text-xs uppercase shadow-md shadow-[#C5F36A]/20">
-                Trending #{heroIndex + 1}
-              </span>
-              {activeHero.imdbRating && (
-                <div className="flex items-center gap-1.5 text-xs font-mono text-[#C5F36A] bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 font-bold">
-                  <Star className="w-3.5 h-3.5 fill-current" />
-                  <span>{activeHero.imdbRating}</span>
-                </div>
-              )}
-            </div>
-
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold uppercase text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] leading-tight mb-2">
-              {activeHero.name || activeHero.title}
-            </h2>
-
-            {activeHero.description && (
-              <p className="text-xs sm:text-sm text-zinc-100 line-clamp-2 mb-4 font-sans max-w-xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-                {activeHero.description}
-              </p>
-            )}
-
-            <div className="flex items-center gap-3">
-              <a
-                href={`#/watch/movie/${activeHero.id || activeHero.imdb_id}`}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#C5F36A] text-black font-bold text-xs sm:text-sm hover:bg-[#b5e357] transition-all shadow-lg shadow-[#C5F36A]/25"
+    <div className="max-w-7xl mx-auto px-6 sm:px-10 py-6 bg-[#0D0F15]">
+      {/* Silky Smooth Cross-Fading Trending Movies Banner */}
+      {trendingHero.length > 0 && (
+        <div className="relative w-full h-[360px] sm:h-[440px] md:h-[490px] rounded-3xl overflow-hidden mb-8 border border-white/10 bg-[#0D0F15] select-none shadow-2xl">
+          {/* Stacked Slides for Smooth 60fps Cross-Fade */}
+          {trendingHero.map((cand, idx) => {
+            const isCurrent = heroIndex === idx;
+            return (
+              <div
+                key={cand.id || idx}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                  isCurrent ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
+                }`}
               >
-                <Play className="w-4 h-4 fill-current ml-0.5" />
-                <span>Watch Movie</span>
-              </a>
+                {/* Full-Brightness Backdrop Image */}
+                <img
+                  src={cand.background || cand.poster}
+                  alt={cand.name}
+                  className="w-full h-full object-cover object-center opacity-100"
+                />
 
-              <a
-                href={`#/details/movie/${activeHero.id || activeHero.imdb_id}`}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-black/70 backdrop-blur-md text-white text-xs sm:text-sm font-medium hover:bg-black/90 transition-all border border-white/20"
-              >
-                <Info className="w-4 h-4" />
-                <span>Details</span>
-              </a>
+                {/* Left Text Scrim Only */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0D0F15]/90 via-[#0D0F15]/25 to-transparent w-full md:w-3/4" />
 
-              {/* Dots */}
-              {trendingHero.length > 1 && (
-                <div className="flex items-center gap-1.5 ml-4">
-                  {trendingHero.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setHeroIndex(i)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        heroIndex === i ? 'w-6 bg-[#C5F36A]' : 'w-2 bg-white/40 hover:bg-white/70'
-                      }`}
-                      aria-label={`Go to slide ${i + 1}`}
-                    />
-                  ))}
+                {/* Subtle Bottom Edge Transition */}
+                <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#0D0F15] to-transparent pointer-events-none" />
+
+                {/* Banner Content */}
+                <div className="relative z-20 h-full flex flex-col justify-end p-6 sm:p-10 max-w-2xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="px-3 py-1 rounded-full bg-[#C5F36A] text-black font-mono font-bold text-xs uppercase shadow-md shadow-[#C5F36A]/20">
+                      Trending #{idx + 1}
+                    </span>
+                    {cand.imdbRating && (
+                      <div className="flex items-center gap-1.5 text-xs font-mono text-[#C5F36A] bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 font-bold">
+                        <Star className="w-3.5 h-3.5 fill-current" />
+                        <span>{cand.imdbRating}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold uppercase text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] leading-tight mb-2">
+                    {cand.name || cand.title}
+                  </h2>
+
+                  {cand.description && (
+                    <p className="text-xs sm:text-sm text-zinc-100 line-clamp-2 mb-4 font-sans max-w-xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                      {cand.description}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={`#/watch/movie/${cand.id || cand.imdb_id}`}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#C5F36A] text-black font-bold text-xs sm:text-sm hover:bg-[#b5e357] transition-all shadow-lg shadow-[#C5F36A]/25"
+                    >
+                      <Play className="w-4 h-4 fill-current ml-0.5" />
+                      <span>Watch Movie</span>
+                    </a>
+
+                    <a
+                      href={`#/details/movie/${cand.id || cand.imdb_id}`}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-black/70 backdrop-blur-md text-white text-xs sm:text-sm font-medium hover:bg-black/90 transition-all border border-white/20"
+                    >
+                      <Info className="w-4 h-4" />
+                      <span>Details</span>
+                    </a>
+
+                    {/* Dots */}
+                    {trendingHero.length > 1 && (
+                      <div className="flex items-center gap-1.5 ml-4">
+                        {trendingHero.map((_, dotI) => (
+                          <button
+                            key={dotI}
+                            onClick={() => setHeroIndex(dotI)}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                              heroIndex === dotI ? 'w-6 bg-[#C5F36A]' : 'w-2 bg-white/40 hover:bg-white/70'
+                            }`}
+                            aria-label={`Go to slide ${dotI + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

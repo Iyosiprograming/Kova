@@ -73,7 +73,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#090A0B] text-zinc-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#0D0F15] text-zinc-100 flex flex-col font-sans">
       <Navbar
         activeTab={getActiveTab()}
         onOpenSearch={() => setIsSearchOpen(true)}

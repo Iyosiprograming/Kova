@@ -7,6 +7,8 @@ interface MediaRowProps {
   items: any[];
   loading?: boolean;
   emptyMessage?: string;
+  isHistory?: boolean;
+  onRemoveHistory?: (id: string) => void;
 }
 
 export const MediaRow: React.FC<MediaRowProps> = ({
@@ -14,6 +16,8 @@ export const MediaRow: React.FC<MediaRowProps> = ({
   items,
   loading = false,
   emptyMessage = 'No items found',
+  isHistory = false,
+  onRemoveHistory,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +70,12 @@ export const MediaRow: React.FC<MediaRowProps> = ({
             ))
           ) : items.length > 0 ? (
             items.map((item, idx) => (
-              <MediaCard key={item.id || item.imdb_id || idx} item={item} />
+              <MediaCard
+                key={item.id || item.imdb_id || idx}
+                item={item}
+                isHistory={isHistory}
+                onRemoveHistory={onRemoveHistory}
+              />
             ))
           ) : (
             <div className="text-zinc-500 text-sm py-8">{emptyMessage}</div>

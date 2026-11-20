@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Film, Tv, Play, Plus, Check } from 'lucide-react';
-import { MediaMeta, checkWatchlist, addToWatchlist, removeFromWatchlist, WatchlistItem } from '../lib/api';
+import { Star, Film, Tv, Play, Plus, Check, X } from 'lucide-react';
+import { MediaMeta, checkWatchlist, addToWatchlist, removeFromWatchlist, removeFromWatchHistory, WatchlistItem } from '../lib/api';
 
 interface MediaCardProps {
   item: MediaMeta | {
@@ -13,14 +13,23 @@ interface MediaCardProps {
     episode?: number | null;
     year?: string | number;
   };
+  isHistory?: boolean;
   onSelect?: (item: any) => void;
   onWatchlistChange?: (id: string, inWatchlist: boolean) => void;
+  onRemoveHistory?: (id: string) => void;
 }
 
-export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect, onWatchlistChange }) => {
+export const MediaCard: React.FC<MediaCardProps> = ({
+  item,
+  isHistory,
+  onSelect,
+  onWatchlistChange,
+  onRemoveHistory,
+}) => {
   const [imageError, setImageError] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   const id = 'id' in item ? item.id : item.imdb_id;
   const title = 'name' in item ? item.name || item.title : item.title;
@@ -72,6 +81,18 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect, onWatchlis
     }
   };
 
+  const handleRemoveHistory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!id || removing) return;
+    setRemoving(true);
+    try {
+      await removeFromWatchHistory(id);
+      onRemoveHistory?.(id);
+    } finally {
+      setRemoving(false);
+    }
+  };
+
   const handleClick = () => {
     if (onSelect) {
       onSelect(item);
@@ -83,10 +104,10 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect, onWatchlis
   return (
     <div
       onClick={handleClick}
-      className="group relative cursor-pointer flex-shrink-0 w-[155px] sm:w-[175px] md:w-[195px] rounded-xl overflow-hidden bg-[#121316] border border-white/10 hover:border-[#C5F36A]/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-black/80 select-none"
+      className="group relative cursor-pointer flex-shrink-0 w-[155px] sm:w-[175px] md:w-[195px] rounded-xl overflow-hidden bg-[#151821] border border-white/[0.08] hover:border-[#C5F36A]/60 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-black/70 select-none"
     >
       {/* 2:3 Aspect Ratio Container */}
-      <div className="relative aspect-[2/3] w-full bg-zinc-950 overflow-hidden">
+      <div className="relative aspect-[2/3] w-full bg-[#0D0F15] overflow-hidden">
         {poster && !imageError ? (
           <img
             src={poster}
@@ -109,7 +130,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect, onWatchlis
           </div>
         </div>
 
-        {/* Top Badges & Quick Watchlist Button */}
+        {/* Top Badges & Actions */}
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
           {rating ? (
             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-md border border-white/15 text-[11px] font-mono font-bold text-[#C5F36A]">
@@ -118,19 +139,33 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect, onWatchlis
             </div>
           ) : <div />}
 
-          {/* Quick Add/Remove Watchlist Button */}
-          <button
-            onClick={handleWatchlistClick}
-            disabled={saving}
-            title={isSaved ? 'Remove from Watchlist' : 'Add to Watchlist'}
-            className={`pointer-events-auto p-1.5 rounded-full transition-all duration-200 backdrop-blur-md ${
-              isSaved
-                ? 'bg-[#C5F36A] text-black shadow-md shadow-[#C5F36A]/30'
-                : 'bg-black/60 text-white/90 hover:bg-[#C5F36A] hover:text-black border border-white/20'
-            }`}
-          >
-            {isSaved ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <Plus className="w-3.5 h-3.5 stroke-[2.5]" />}
-          </button>
+          <div className="flex items-center gap-1.5 pointer-events-auto">
+            {/* Quick Watchlist Bookmark Button */}
+            <button
+              onClick={handleWatchlistClick}
+              disabled={saving}
+              title={isSaved ? 'Remove from Watchlist' : 'Add to Watchlist'}
+              className={`p-1.5 rounded-full transition-all duration-200 backdrop-blur-md ${
+                isSaved
+                  ? 'bg-[#C5F36A] text-black shadow-md shadow-[#C5F36A]/30'
+                  : 'bg-black/60 text-white/90 hover:bg-[#C5F36A] hover:text-black border border-white/20'
+              }`}
+            >
+              {isSaved ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <Plus className="w-3.5 h-3.5 stroke-[2.5]" />}
+            </button>
+
+            {/* Quick Remove from Continue Watching Button */}
+            {isHistory && (
+              <button
+                onClick={handleRemoveHistory}
+                disabled={removing}
+                title="Remove from Continue Watching"
+                className="p-1.5 rounded-full bg-black/60 text-white/80 hover:bg-red-500 hover:text-white border border-white/20 transition-all duration-200 backdrop-blur-md"
+              >
+                <X className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Bottom Season/Episode badge if present */}
@@ -144,7 +179,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect, onWatchlis
       </div>
 
       {/* Title & Metadata */}
-      <div className="p-3 bg-[#111215]">
+      <div className="p-3 bg-[#151821]">
         <h4 className="font-semibold text-xs sm:text-sm text-zinc-100 truncate group-hover:text-[#C5F36A] transition-colors">
           {title}
         </h4>
