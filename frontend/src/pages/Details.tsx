@@ -249,7 +249,7 @@ export const Details: React.FC<DetailsProps> = ({ mediaType, imdbId }) => {
                         : 'glass-pill text-zinc-300 hover:text-white'
                     }`}
                   >
-                    Season {seasonNum}
+                    {seasonNum === 0 ? 'Specials / Extras' : `Season ${seasonNum}`}
                   </button>
                 ))}
               </div>

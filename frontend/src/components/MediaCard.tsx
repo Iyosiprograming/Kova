@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Star, Film, Tv, Play } from 'lucide-react';
-import { MediaMeta } from '../lib/api';
+import React, { useState, useEffect } from 'react';
+import { Star, Film, Tv, Play, Plus, Check } from 'lucide-react';
+import { MediaMeta, checkWatchlist, addToWatchlist, removeFromWatchlist, WatchlistItem } from '../lib/api';
 
 interface MediaCardProps {
   item: MediaMeta | {
@@ -14,10 +14,13 @@ interface MediaCardProps {
     year?: string | number;
   };
   onSelect?: (item: any) => void;
+  onWatchlistChange?: (id: string, inWatchlist: boolean) => void;
 }
 
-export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect }) => {
+export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect, onWatchlistChange }) => {
   const [imageError, setImageError] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const id = 'id' in item ? item.id : item.imdb_id;
   const title = 'name' in item ? item.name || item.title : item.title;
@@ -30,6 +33,45 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect }) => {
   const season = 'season' in item ? item.season : undefined;
   const episode = 'episode' in item ? item.episode : undefined;
 
+  // Check initial watchlist status
+  useEffect(() => {
+    let active = true;
+    if (id) {
+      checkWatchlist(id).then((saved) => {
+        if (active) setIsSaved(saved);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const handleWatchlistClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!id || saving) return;
+    setSaving(true);
+    try {
+      if (isSaved) {
+        await removeFromWatchlist(id);
+        setIsSaved(false);
+        onWatchlistChange?.(id, false);
+      } else {
+        const watchItem: WatchlistItem = {
+          imdb_id: id,
+          media_type: mediaType as 'movie' | 'series',
+          title: title || 'Untitled',
+          poster: poster || null,
+          rating: rating ? Number(rating) : null,
+        };
+        await addToWatchlist(watchItem);
+        setIsSaved(true);
+        onWatchlistChange?.(id, true);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleClick = () => {
     if (onSelect) {
       onSelect(item);
@@ -41,10 +83,10 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect }) => {
   return (
     <div
       onClick={handleClick}
-      className="group relative cursor-pointer flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] rounded-xl overflow-hidden glass-panel hover:border-white/20 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-black/60 select-none"
+      className="group relative cursor-pointer flex-shrink-0 w-[155px] sm:w-[175px] md:w-[195px] rounded-xl overflow-hidden bg-[#121316] border border-white/10 hover:border-[#C5F36A]/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-black/80 select-none"
     >
       {/* 2:3 Aspect Ratio Container */}
-      <div className="relative aspect-[2/3] w-full bg-zinc-900 overflow-hidden">
+      <div className="relative aspect-[2/3] w-full bg-zinc-950 overflow-hidden">
         {poster && !imageError ? (
           <img
             src={poster}
@@ -54,48 +96,61 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onSelect }) => {
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-zinc-900/90 text-zinc-500">
-            {mediaType === 'series' ? <Tv className="w-10 h-10 mb-2 opacity-40" /> : <Film className="w-10 h-10 mb-2 opacity-40" />}
-            <span className="text-xs font-medium text-zinc-400 line-clamp-2">{title}</span>
+          <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-zinc-900 text-zinc-500">
+            {mediaType === 'series' ? <Tv className="w-10 h-10 mb-2 opacity-50 text-zinc-400" /> : <Film className="w-10 h-10 mb-2 opacity-50 text-zinc-400" />}
+            <span className="text-xs font-medium text-zinc-300 line-clamp-2">{title}</span>
           </div>
         )}
 
-        {/* Hover play overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-[#C5F36A] text-black flex items-center justify-center shadow-lg shadow-black/50 transform scale-75 group-hover:scale-100 transition-transform duration-300">
-            <Play className="w-5 h-5 fill-current ml-0.5" />
+        {/* Subtle hover gradient and play pill */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-full bg-[#C5F36A] text-black flex items-center justify-center shadow-lg shadow-[#C5F36A]/30 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+            <Play className="w-4 h-4 fill-current ml-0.5" />
           </div>
         </div>
 
-        {/* Top Badges */}
+        {/* Top Badges & Quick Watchlist Button */}
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
           {rating ? (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-md border border-white/10 text-xs font-mono font-semibold text-[#C5F36A]">
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-md border border-white/15 text-[11px] font-mono font-bold text-[#C5F36A]">
               <Star className="w-3 h-3 fill-[#C5F36A] text-[#C5F36A]" />
               <span>{typeof rating === 'number' ? rating.toFixed(1) : rating}</span>
             </div>
           ) : <div />}
 
-          {season && episode ? (
-            <div className="px-1.5 py-0.5 rounded-md bg-[#C5F36A] text-black font-mono text-[11px] font-bold tracking-tight">
-              S{season} E{episode}
-            </div>
-          ) : (
-            <div className="px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-mono uppercase tracking-wider text-zinc-300">
-              {mediaType === 'series' ? 'TV' : 'Film'}
-            </div>
-          )}
+          {/* Quick Add/Remove Watchlist Button */}
+          <button
+            onClick={handleWatchlistClick}
+            disabled={saving}
+            title={isSaved ? 'Remove from Watchlist' : 'Add to Watchlist'}
+            className={`pointer-events-auto p-1.5 rounded-full transition-all duration-200 backdrop-blur-md ${
+              isSaved
+                ? 'bg-[#C5F36A] text-black shadow-md shadow-[#C5F36A]/30'
+                : 'bg-black/60 text-white/90 hover:bg-[#C5F36A] hover:text-black border border-white/20'
+            }`}
+          >
+            {isSaved ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <Plus className="w-3.5 h-3.5 stroke-[2.5]" />}
+          </button>
         </div>
+
+        {/* Bottom Season/Episode badge if present */}
+        {season !== undefined && episode !== undefined && (
+          <div className="absolute bottom-2 left-2 pointer-events-none">
+            <div className="px-1.5 py-0.5 rounded bg-[#C5F36A] text-black font-mono text-[10px] font-extrabold uppercase">
+              {season === 0 ? 'Specials' : `S${season}`} • E{episode}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Title & Metadata */}
-      <div className="p-3">
-        <h4 className="font-medium text-sm text-zinc-100 truncate group-hover:text-[#C5F36A] transition-colors">
+      <div className="p-3 bg-[#111215]">
+        <h4 className="font-semibold text-xs sm:text-sm text-zinc-100 truncate group-hover:text-[#C5F36A] transition-colors">
           {title}
         </h4>
-        <div className="flex items-center justify-between mt-1 text-xs text-zinc-400 font-mono">
-          <span>{year || (mediaType === 'series' ? 'Series' : 'Movie')}</span>
-          <span className="text-zinc-500 capitalize">{mediaType}</span>
+        <div className="flex items-center justify-between mt-1 text-[11px] text-zinc-400 font-mono">
+          <span>{year || (mediaType === 'series' ? 'TV Series' : 'Movie')}</span>
+          <span className="text-zinc-500 uppercase tracking-wider text-[10px]">{mediaType}</span>
         </div>
       </div>
     </div>

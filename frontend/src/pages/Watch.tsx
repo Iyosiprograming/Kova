@@ -31,6 +31,7 @@ export const Watch: React.FC<WatchProps> = ({
 
   const title = meta?.name || meta?.title || (mediaType === 'series' ? 'TV Series' : 'Movie');
   const poster = meta?.poster;
+  const episodes = meta?.videos || [];
 
   return (
     <VodPlayer
@@ -40,6 +41,7 @@ export const Watch: React.FC<WatchProps> = ({
       poster={poster}
       season={season}
       episode={episode}
+      episodes={episodes}
     />
   );
 };

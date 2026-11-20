@@ -7,7 +7,7 @@ import { TvShows } from './pages/TvShows';
 import { Details } from './pages/Details';
 import { Sports } from './pages/Sports';
 import { Watch } from './pages/Watch';
-
+import { WatchlistPage } from './pages/Watchlist';
 export const App: React.FC = () => {
   const [currentHash, setCurrentHash] = useState<string>(window.location.hash || '#/');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -27,12 +27,18 @@ export const App: React.FC = () => {
     if (currentHash.startsWith('#/movies')) return 'movies';
     if (currentHash.startsWith('#/tv')) return 'tv';
     if (currentHash.startsWith('#/sports')) return 'sports';
+    if (currentHash.startsWith('#/watchlist')) return 'watchlist';
     return 'home';
   };
 
   // Route dispatcher
   const renderContent = () => {
     const hash = currentHash;
+
+    // Watchlist Page: #/watchlist
+    if (hash.startsWith('#/watchlist')) {
+      return <WatchlistPage />;
+    }
 
     // Sports Watch: #/sports/watch/:id
     if (hash.startsWith('#/sports/watch/')) {
