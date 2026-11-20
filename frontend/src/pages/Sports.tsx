@@ -30,6 +30,7 @@ function getInitials(name?: string): string {
 
 export const Sports: React.FC = () => {
   const [selectedSport, setSelectedSport] = useState<SportCategory>('all');
+  const [selectedProvider, setSelectedProvider] = useState<'all' | 'daddylive' | 'embedse'>('all');
   const [matches, setMatches] = useState<SportsMatch[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -59,19 +60,44 @@ export const Sports: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Filter matches based on selected category
+  // Filter matches based on selected category and provider
   const filteredMatches = React.useMemo(() => {
-    if (selectedSport === 'all') return matches;
     return matches.filter((m) => {
+      // Provider filter
+      if (selectedProvider === 'daddylive' && m.provider !== 'daddylive') return false;
+      if (selectedProvider === 'embedse' && m.provider === 'daddylive') return false;
+
+      // Sport category filter
+      if (selectedSport === 'all') return true;
       const s = (m.sport || m.category || m.category_slug || '').toLowerCase();
-      if (selectedSport === 'soccer') return s.includes('foot') || s.includes('socc');
-      if (selectedSport === 'combat') return s.includes('ufc') || s.includes('mma') || s.includes('box');
-      if (selectedSport === 'basketball') return s.includes('basket') || s.includes('nba');
-      if (selectedSport === 'tennis') return s.includes('tennis');
+      if (selectedSport === 'soccer') {
+        return (
+          s.includes('foot') ||
+          s.includes('socc') ||
+          s.includes('liga') ||
+          s.includes('serie') ||
+          s.includes('premier') ||
+          s.includes('coppa') ||
+          s.includes('bundes')
+        );
+      }
+      if (selectedSport === 'combat') {
+        return (
+          s.includes('ufc') ||
+          s.includes('mma') ||
+          s.includes('box') ||
+          s.includes('fight') ||
+          s.includes('combat')
+        );
+      }
+      if (selectedSport === 'basketball') {
+        return s.includes('basket') || s.includes('nba') || s.includes('euroleague');
+      }
+      if (selectedSport === 'tennis') return s.includes('tennis') || s.includes('atp') || s.includes('wta');
       if (selectedSport === 'golf') return s.includes('golf') || s.includes('pga');
       return true;
     });
-  }, [matches, selectedSport]);
+  }, [matches, selectedSport, selectedProvider]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 sm:px-10 py-6">
@@ -86,14 +112,52 @@ export const Sports: React.FC = () => {
         <SportsHero matches={matches} selectedSport={selectedSport} />
       )}
 
-      {/* Match Cards Header */}
-      <div className="flex items-center justify-between mt-10 mb-6">
-        <h2 className="font-display text-2xl sm:text-3xl font-bold uppercase tracking-wide text-white">
-          {selectedSport === 'all' ? 'All Live & Scheduled Matches' : `${selectedSport} Matches`}
-        </h2>
-        <span className="font-mono text-xs text-zinc-400">
-          <span className="text-[#C5F36A] font-semibold">{filteredMatches.length}</span> events
-        </span>
+      {/* Match Cards Header & Provider Filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-10 mb-6">
+        <div>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold uppercase tracking-wide text-white">
+            {selectedSport === 'all' ? 'All Live & Scheduled Matches' : `${selectedSport} Matches`}
+          </h2>
+          <span className="font-mono text-xs text-zinc-400">
+            <span className="text-[#C5F36A] font-semibold">{filteredMatches.length}</span> events available
+          </span>
+        </div>
+
+        {/* Source Provider Switcher */}
+        <div className="flex items-center gap-1.5 p-1 rounded-full glass-panel bg-zinc-950/60 border border-white/10 self-start sm:self-auto">
+          <button
+            onClick={() => setSelectedProvider('all')}
+            className={`px-3 py-1 rounded-full text-xs font-mono transition-all ${
+              selectedProvider === 'all'
+                ? 'bg-white/15 text-white font-semibold shadow-sm'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            All Sources
+          </button>
+          <button
+            onClick={() => setSelectedProvider('daddylive')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono transition-all ${
+              selectedProvider === 'daddylive'
+                ? 'bg-amber-400/20 text-amber-300 font-semibold border border-amber-400/40'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>DaddyLive</span>
+          </button>
+          <button
+            onClick={() => setSelectedProvider('embedse')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono transition-all ${
+              selectedProvider === 'embedse'
+                ? 'bg-cyan-400/20 text-cyan-300 font-semibold border border-cyan-400/40'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+            <span>EmbedSE</span>
+          </button>
+        </div>
       </div>
 
       {/* Match Cards Grid */}
@@ -109,6 +173,7 @@ export const Sports: React.FC = () => {
           filteredMatches.map((match) => {
             const isLive = match.status === 'live';
             const isFinished = match.status === 'finished';
+            const isDaddyLive = match.provider === 'daddylive';
 
             return (
               <a
@@ -116,11 +181,22 @@ export const Sports: React.FC = () => {
                 href={`#/sports/watch/${match.id}`}
                 className="group relative flex flex-col justify-between p-5 rounded-2xl glass-panel bg-zinc-950/40 hover:bg-white/5 hover:border-white/20 transition-all duration-200 select-none shadow-lg"
               >
-                {/* Header: League & Status Badge */}
+                {/* Header: League, Provider & Status Badge */}
                 <div className="flex items-center justify-between gap-2 mb-4">
-                  <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider truncate max-w-[180px]">
-                    {match.league || match.category || match.sport}
-                  </span>
+                  <div className="flex items-center gap-2 truncate max-w-[200px]">
+                    <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider truncate">
+                      {match.league || match.category || match.sport}
+                    </span>
+                    {isDaddyLive ? (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                        DaddyLive
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                        EmbedSE
+                      </span>
+                    )}
+                  </div>
 
                   {isLive ? (
                     <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 font-mono text-[11px] font-bold">

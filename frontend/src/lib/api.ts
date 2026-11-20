@@ -69,6 +69,7 @@ export interface SportsMatch {
   online_streams?: number;
   streams_count?: number;
   embed_url?: string;
+  provider?: 'daddylive' | 'embedse' | string;
 }
 
 export interface StreamSource {
