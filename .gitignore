@@ -1,0 +1,28 @@
+# Python & Virtualenv
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local Database & Cache
+kova.db
+kova.db-journal
+
+# Build & Dist
+dist/
+build/
+*.spec
+*.exe
+
+# Node & Frontend
+node_modules/
+frontend/dist/
+frontend/node_modules/
+.vite/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
