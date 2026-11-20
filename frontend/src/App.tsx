@@ -6,6 +6,7 @@ import { Movies } from './pages/Movies';
 import { TvShows } from './pages/TvShows';
 import { Details } from './pages/Details';
 import { Sports } from './pages/Sports';
+import { Channels } from './pages/Channels';
 import { Watch } from './pages/Watch';
 import { WatchlistPage } from './pages/Watchlist';
 export const App: React.FC = () => {
@@ -28,8 +29,17 @@ export const App: React.FC = () => {
       fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
     };
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 3000);
-    return () => clearInterval(interval);
+    const interval = setInterval(sendHeartbeat, 4000);
+
+    const onVisible = () => {
+      if (!document.hidden) sendHeartbeat();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   // Compute active navigation tab
@@ -37,6 +47,7 @@ export const App: React.FC = () => {
     if (currentHash.startsWith('#/movies')) return 'movies';
     if (currentHash.startsWith('#/tv')) return 'tv';
     if (currentHash.startsWith('#/sports')) return 'sports';
+    if (currentHash.startsWith('#/channels')) return 'channels';
     if (currentHash.startsWith('#/watchlist')) return 'watchlist';
     return 'home';
   };
@@ -44,6 +55,11 @@ export const App: React.FC = () => {
   // Route dispatcher
   const renderContent = () => {
     const hash = currentHash;
+
+    // Channels Page: #/channels
+    if (hash.startsWith('#/channels')) {
+      return <Channels />;
+    }
 
     // Watchlist Page: #/watchlist
     if (hash.startsWith('#/watchlist')) {
@@ -101,7 +117,7 @@ export const App: React.FC = () => {
 
       {/* Minimal Footer */}
       <footer className="w-full border-t border-white/5 py-8 px-6 text-center text-xs font-mono text-zinc-600">
-        <span>KOVA • Local Desktop Streaming • Stremio Cinemeta & EmbedSE</span>
+        <span>KOVA • Local Desktop Streaming • Cinemeta & DaddyLive</span>
       </footer>
     </div>
   );

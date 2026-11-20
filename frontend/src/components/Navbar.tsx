@@ -12,6 +12,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onOpenSearch }) => {
     { id: 'movies', label: 'Movies', hash: '#/movies' },
     { id: 'tv', label: 'TV Shows', hash: '#/tv' },
     { id: 'sports', label: 'Sports', hash: '#/sports' },
+    { id: 'channels', label: 'Channels', hash: '#/channels' },
     { id: 'watchlist', label: 'Watchlist', hash: '#/watchlist' },
   ];
 

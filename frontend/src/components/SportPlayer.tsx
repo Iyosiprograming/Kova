@@ -8,14 +8,9 @@ interface SportPlayerProps {
 }
 
 export const SportPlayer: React.FC<SportPlayerProps> = ({ matchId, onBack }) => {
-  const isDaddyLive = matchId.startsWith('dl_');
   const [data, setData] = useState<MatchStreamsResponse | null>(null);
-  const [activeUrl, setActiveUrl] = useState<string>(
-    isDaddyLive ? '' : `https://embedse.com/m/${matchId}`
-  );
-  const [activeLabel, setActiveLabel] = useState<string>(
-    isDaddyLive ? 'DaddyLive Stream' : 'Auto Server'
-  );
+  const [activeUrl, setActiveUrl] = useState<string>('');
+  const [activeLabel, setActiveLabel] = useState<string>('DaddyLive Stream');
   const [loading, setLoading] = useState<boolean>(true);
   const [reloadKey, setReloadKey] = useState<number>(0);
 
@@ -27,15 +22,10 @@ export const SportPlayer: React.FC<SportPlayerProps> = ({ matchId, onBack }) => 
       .then((res) => {
         if (!mounted) return;
         setData(res);
-        if (isDaddyLive) {
-          const firstStream = res.streams && res.streams[0];
-          const url = firstStream?.embed_url || res.auto_embed_url || '';
-          setActiveUrl(url);
-          setActiveLabel(firstStream?.name || 'Link - 1 (DaddyLive)');
-        } else {
-          setActiveUrl(res.auto_embed_url || `https://embedse.com/m/${matchId}`);
-          setActiveLabel('Auto Player (Recommended)');
-        }
+        const firstStream = res.streams && res.streams[0];
+        const url = firstStream?.embed_url || res.auto_embed_url || '';
+        setActiveUrl(url);
+        setActiveLabel(firstStream?.name || 'Link - 1 (DaddyLive)');
       })
       .catch(() => {})
       .finally(() => {
@@ -45,7 +35,7 @@ export const SportPlayer: React.FC<SportPlayerProps> = ({ matchId, onBack }) => 
     return () => {
       mounted = false;
     };
-  }, [matchId, isDaddyLive]);
+  }, [matchId]);
 
   const streams = data?.streams || [];
 
@@ -56,7 +46,7 @@ export const SportPlayer: React.FC<SportPlayerProps> = ({ matchId, onBack }) => 
         <button
           onClick={() => {
             if (onBack) onBack();
-            else window.history.back();
+            else window.location.hash = '#/sports';
           }}
           className="flex items-center gap-2 px-3 py-1.5 rounded-full glass-pill text-xs font-mono text-zinc-300 hover:text-white transition-colors"
         >
@@ -65,17 +55,10 @@ export const SportPlayer: React.FC<SportPlayerProps> = ({ matchId, onBack }) => 
         </button>
 
         <div className="flex items-center gap-2">
-          {isDaddyLive ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold">
-              <Radio className="w-3.5 h-3.5 animate-pulse" />
-              <span>DADDYLIVE STREAM</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 font-mono text-xs font-bold">
-              <Radio className="w-3.5 h-3.5 animate-pulse" />
-              <span>LIVE MATCH</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold">
+            <Radio className="w-3.5 h-3.5 animate-pulse" />
+            <span>DADDYLIVE STREAM</span>
+          </div>
         </div>
       </div>
 
@@ -114,25 +97,6 @@ export const SportPlayer: React.FC<SportPlayerProps> = ({ matchId, onBack }) => 
 
         {/* Server Selection Pills */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Auto Fallback Server (Only for EmbedSE) */}
-          {!isDaddyLive && (
-            <button
-              onClick={() => {
-                setActiveUrl(data?.auto_embed_url || `https://embedse.com/m/${matchId}`);
-                setActiveLabel('Auto Player (Recommended)');
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono transition-all ${
-                activeLabel.startsWith('Auto')
-                  ? 'bg-[#C5F36A] text-black font-semibold shadow-md shadow-[#C5F36A]/20'
-                  : 'glass-pill text-zinc-300 hover:text-white'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>Auto Player (Recommended)</span>
-            </button>
-          )}
-
-          {/* Individual Match Streams */}
           {streams.map((stream, idx) => {
             const isOnline = !!stream.online;
             const label = stream.name || stream.source || `Server ${idx + 1}`;
@@ -157,11 +121,6 @@ export const SportPlayer: React.FC<SportPlayerProps> = ({ matchId, onBack }) => 
                   }`}
                 />
                 <span>{label}</span>
-                {stream.language && (
-                  <span className="text-[10px] uppercase text-zinc-400 opacity-80">
-                    [{stream.language}]
-                  </span>
-                )}
               </button>
             );
           })}
@@ -169,7 +128,7 @@ export const SportPlayer: React.FC<SportPlayerProps> = ({ matchId, onBack }) => 
           {!loading && streams.length === 0 && (
             <div className="flex items-center gap-1.5 text-xs font-mono text-zinc-400 py-1">
               <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-              <span>Playing via primary auto server.</span>
+              <span>Connecting to live stream...</span>
             </div>
           )}
         </div>

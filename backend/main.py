@@ -32,13 +32,11 @@ from backend.services.cinemeta import (
     fetch_meta,
     search_media,
 )
-from backend.services.embedse import (
-    fetch_matches,
-    fetch_match_streams,
-)
 from backend.services.daddylive import (
     fetch_daddylive_events,
     fetch_daddylive_streams,
+    fetch_daddylive_channels,
+    get_channel_by_id,
 )
 
 
@@ -187,74 +185,58 @@ async def search(q: str = Query(..., min_length=1)):
 
 
 # ---------------------------------------------------------
-# Sports Routes (EmbedSE & DaddyLive)
+# Sports & Channels Routes (DaddyLive)
 # ---------------------------------------------------------
 @app.get("/api/sports/matches")
-async def get_sports_matches(provider: Optional[str] = Query(None)):
+async def get_sports_matches():
     """
-    Fetch live and upcoming sports matches ranked by status, streams, and league.
-    Combines EmbedSE and DaddyLive sources.
+    Fetch live sports matches directly from DaddyLive.
     Cached in RAM for 60 seconds.
     """
-    cache_key = f"sports:matches:{provider or 'all'}"
+    cache_key = "sports:matches"
     cached = memory_cache.get(cache_key)
     if cached is not None:
         return {"source": "cache", "count": len(cached), "matches": cached}
 
-    # Fetch both sources concurrently
-    embedse_task = fetch_matches()
-    daddylive_task = fetch_daddylive_events()
-
-    embedse_res, dl_res = await asyncio.gather(
-        embedse_task,
-        daddylive_task,
-        return_exceptions=True
-    )
-
-    combined: List[Dict[str, Any]] = []
-
-    # 1. DaddyLive matches (primarily live right now)
-    if isinstance(dl_res, list):
-        for m in dl_res:
-            m["provider"] = "daddylive"
-            combined.append(m)
-
-    # 2. EmbedSE matches (live + upcoming scheduled)
-    if isinstance(embedse_res, list):
-        for m in embedse_res:
-            m["provider"] = "embedse"
-            combined.append(m)
-
-    # Filter by provider if requested
-    if provider == "daddylive":
-        combined = [m for m in combined if m.get("provider") == "daddylive"]
-    elif provider == "embedse":
-        combined = [m for m in combined if m.get("provider") == "embedse"]
-
-    # Rank: Live matches first, then upcoming
-    def _sort_key(item: Dict[str, Any]) -> int:
-        status_str = str(item.get("status") or "").lower()
-        if status_str == "live":
-            return 200 + int(item.get("online_streams") or 0)
-        return 50
-
-    combined.sort(key=_sort_key, reverse=True)
-
-    memory_cache.set(cache_key, combined, ttl=TTL_SPORTS)
-    return {"source": "live", "count": len(combined), "matches": combined}
+    matches = await fetch_daddylive_events()
+    memory_cache.set(cache_key, matches, ttl=TTL_SPORTS)
+    return {"source": "live", "count": len(matches), "matches": matches}
 
 
 @app.get("/api/sports/matches/{match_id}/streams")
 async def get_sports_streams(match_id: str):
     """
-    Fetch fresh stream servers for a match (DaddyLive or EmbedSE).
+    Fetch fresh stream servers for a DaddyLive sports match.
     """
-    if match_id.startswith("dl_"):
-        data = await fetch_daddylive_streams(match_id)
-        return data
-
-    data = await fetch_match_streams(match_id)
+    data = await fetch_daddylive_streams(match_id)
     return data
+
+
+@app.get("/api/channels")
+async def get_channels():
+    """
+    Fetch 24/7 Live TV channels list from DaddyLive.
+    Cached in RAM for 30 minutes.
+    """
+    cache_key = "daddylive:channels"
+    cached = memory_cache.get(cache_key)
+    if cached is not None:
+        return {"source": "cache", "count": len(cached), "channels": cached}
+
+    channels = await fetch_daddylive_channels()
+    memory_cache.set(cache_key, channels, ttl=1800)
+    return {"source": "live", "count": len(channels), "channels": channels}
+
+
+@app.get("/api/channels/{channel_id}")
+async def get_single_channel(channel_id: str):
+    """
+    Retrieve single channel details and streams.
+    """
+    ch = await get_channel_by_id(channel_id)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Channel not found")
+    return ch
 
 
 # ---------------------------------------------------------

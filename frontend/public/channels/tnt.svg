@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50" width="160" height="50">
+  <rect width="160" height="50" rx="8" fill="#E50027"/>
+  <circle cx="36" cy="25" r="16" fill="#000000"/>
+  <text x="23" y="31" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14" font-weight="900">TNT</text>
+  <text x="64" y="33" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14" font-weight="800" letter-spacing="1">SPORTS</text>
+</svg>
