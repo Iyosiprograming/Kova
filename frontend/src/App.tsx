@@ -22,6 +22,16 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Heartbeat ping to keep background backend alive while tab/browser is open
+  useEffect(() => {
+    const sendHeartbeat = () => {
+      fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
+    };
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Compute active navigation tab
   const getActiveTab = (): string => {
     if (currentHash.startsWith('#/movies')) return 'movies';

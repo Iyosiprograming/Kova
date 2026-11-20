@@ -23,6 +23,11 @@ async def test_root_status():
         # When dist/ is built it serves index.html; otherwise JSON placeholder
         assert "Kova" in response.text or "kova" in response.text.lower()
 
+        # Heartbeat endpoint
+        hb_res = await client.post("/api/heartbeat")
+        assert hb_res.status_code == 200
+        assert hb_res.json().get("status") == "ok"
+
 
 @pytest.mark.anyio
 async def test_watchlist_crud():

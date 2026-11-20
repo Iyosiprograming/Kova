@@ -58,6 +58,34 @@ def open_browser_delayed(url: str, delay: float = 1.2):
     thread.start()
 
 
+def start_watchdog(server: uvicorn.Server, startup_grace: float = 35.0, timeout: float = 10.0):
+    """
+    Watchdog thread that checks if any browser tab is open.
+    If no tab has sent a heartbeat within `timeout` seconds, or if the browser
+    fails to open within `startup_grace` seconds, cleanly terminates the background process.
+    """
+    import backend.main as main_module
+
+    def _watch():
+        start_time = time.time()
+        while not server.should_exit:
+            time.sleep(2.0)
+            now = time.time()
+            if main_module.HEARTBEAT_RECEIVED:
+                if (now - main_module.LAST_HEARTBEAT) > timeout:
+                    server.should_exit = True
+                    time.sleep(0.5)
+                    os._exit(0)
+            else:
+                if (now - start_time) > startup_grace:
+                    server.should_exit = True
+                    time.sleep(0.5)
+                    os._exit(0)
+
+    thread = threading.Thread(target=_watch, daemon=True)
+    thread.start()
+
+
 def main():
     host = "127.0.0.1"
     preferred_port = int(os.environ.get("PORT", "8000"))
@@ -75,14 +103,22 @@ def main():
     # Launch browser after 1.2 seconds
     open_browser_delayed(url, delay=1.2)
 
-    # Start Uvicorn ASGI server
-    uvicorn.run(
+    # Initialize Uvicorn Server
+    config = uvicorn.Config(
         app,
         host=host,
         port=port,
         log_level="info",
         access_log=False,
     )
+    server = uvicorn.Server(config)
+
+    # Start auto-shutdown watchdog unless explicitly disabled in dev
+    if os.environ.get("KOVA_NO_SHUTDOWN") != "1":
+        start_watchdog(server, startup_grace=40.0, timeout=10.0)
+
+    # Start server
+    server.run()
 
 
 if __name__ == "__main__":
