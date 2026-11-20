@@ -37,10 +37,15 @@ export const Details: React.FC<DetailsProps> = ({ mediaType, imdbId }) => {
           if (mounted) setInWatchlist(res);
         });
 
-        // Set default season if TV show
+        // Set default season to Season 1 (not Season 0 / Specials)
         if (data?.videos && data.videos.length > 0) {
-          const seasons = Array.from(new Set(data.videos.map((v) => v.season))).sort((a, b) => a - b);
-          if (seasons.length > 0) setSelectedSeason(seasons[0]);
+          const rawSeasons = Array.from(new Set(data.videos.map((v) => v.season)));
+          if (rawSeasons.includes(1)) {
+            setSelectedSeason(1);
+          } else {
+            const firstRegular = rawSeasons.find((s) => s > 0);
+            setSelectedSeason(firstRegular !== undefined ? firstRegular : (rawSeasons[0] || 1));
+          }
         }
 
         // Fetch related titles
@@ -100,9 +105,13 @@ export const Details: React.FC<DetailsProps> = ({ mediaType, imdbId }) => {
     );
   }
 
-  // Extract seasons and episodes for TV shows
+  // Extract seasons and episodes for TV shows (Season 1, 2, 3... first, Specials at end)
   const episodes = meta.videos || [];
-  const seasons = Array.from(new Set(episodes.map((ep) => ep.season))).sort((a, b) => a - b);
+  const seasons = Array.from(new Set(episodes.map((ep) => ep.season))).sort((a, b) => {
+    if (a === 0) return 1;
+    if (b === 0) return -1;
+    return a - b;
+  });
   const currentSeasonEpisodes = episodes.filter((ep) => ep.season === selectedSeason);
 
   return (

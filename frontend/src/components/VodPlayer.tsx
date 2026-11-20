@@ -52,8 +52,12 @@ export const VodPlayer: React.FC<VodPlayerProps> = ({
     }).catch(() => {});
   }, [imdbId, mediaType, title, poster, season, episode]);
 
-  // Extract available seasons
-  const seasons = Array.from(new Set(episodes.map((ep) => ep.season))).sort((a, b) => a - b);
+  // Extract available seasons (Season 1, 2, 3... first, Specials at end)
+  const seasons = Array.from(new Set(episodes.map((ep) => ep.season))).sort((a, b) => {
+    if (a === 0) return 1;
+    if (b === 0) return -1;
+    return a - b;
+  });
   const currentSeasonEpisodes = episodes.filter((ep) => ep.season === activeSeason);
 
   // Find next episode if any
