@@ -114,39 +114,6 @@ export function matchBelongsToCategory(match: SportsMatch, category: SportCatego
   }
 }
 
-export const SPORT_BANNERS: Record<string, string> = {
-  soccer: '/banners/football.jpg',
-  football: '/banners/football.jpg',
-  nba: '/banners/basketball.jpg',
-  basketball: '/banners/basketball.jpg',
-  ufc: '/banners/ufc.jpg',
-  boxing: '/banners/boxing.jpg',
-  formula1: '/banners/f1.jpg',
-  f1: '/banners/f1.jpg',
-  motogp: '/banners/motogp.jpg',
-  tennis: '/banners/tennis.jpg',
-  cricket: '/banners/cricket.jpg',
-  baseball: '/banners/baseball.jpg',
-  mlb: '/banners/baseball.jpg',
-  nfl: '/banners/nfl.jpg',
-  all: '/banners/default.jpg',
-};
-
-export function getSportBanner(sport?: string): string {
-  if (!sport) return SPORT_BANNERS.all;
-  const s = sport.toLowerCase().trim();
-  for (const [key, path] of Object.entries(SPORT_BANNERS)) {
-    if (s.includes(key) || key.includes(s)) return path;
-  }
-  if (s.includes('foot') || s.includes('liga') || s.includes('premier') || s.includes('serie')) {
-    return SPORT_BANNERS.soccer;
-  }
-  if (s.includes('basket')) return SPORT_BANNERS.nba;
-  if (s.includes('race') || s.includes('grand prix')) return SPORT_BANNERS.formula1;
-  if (s.includes('fight') || s.includes('mma')) return SPORT_BANNERS.ufc;
-  return SPORT_BANNERS.all;
-}
-
 export const CHANNEL_NETWORK_LOGOS: Record<string, string> = {
   bein: '/channels/bein.svg',
   sky: '/channels/sky.svg',
